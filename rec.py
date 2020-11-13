@@ -20,7 +20,6 @@ class REC:
     it_world_rpc = RpcProxy('it_world_crawler')
     # --------------------------------------------
     preh_rpc = RpcProxy('primary_raw_events_handler')
-    logger_rpc = RpcProxy('logger')
 
     # Logic
 
@@ -42,21 +41,16 @@ class REC:
         events = list()
 
         # requesting events from each crawler------------------------------
+        # ignoring errors
+        # TODO: add proper error handling for each crawler
         try:
             get_res.append(self.it_events_rpc.get_upcoming_events.call_async())
-        except:
-            self.logger_rpc.log(self.name, self.update.__name__, None, "Error", "it_events crawler doesn't work")
-        try:
             get_res.append(self.softline_rpc.get_upcoming_events.call_async())
-        except:
-            self.logger_rpc.log(self.name, self.update.__name__, None, "Error", "Softline crawler doesn't work")
-        try:
             get_res.append(self.it_world_rpc.get_upcoming_events.call_async())
         except:
-            self.logger_rpc.log(self.name, self.update.__name__, None, "Error", "It world crawler doesn't work")
+            pass
         # Needs to be changed with every new crawler-----------------------
-        
-        self.logger_rpc.log(self.name, self.update.__name__, None, "Info", "Starting fetching events...")
+
         print("Fetching data...")
         # getting results
         count = 1
@@ -65,19 +59,23 @@ class REC:
             print(f"[{count}/{len(get_res)}] crawlers ready")
             count += 1
 
+        # try/finally allows us to ignore if this service doesn't exist
+        # TODO: get rid of this dumb try/finally
         try:
             self.preh_rpc.receive_events(events)
-            self.logger_rpc.log(self.name, self.update.__name__, None, "Info", "Events received and sent to preh")
-        except:
-            self.logger_rpc.log(self.name, self.update.__name__, None, "Error", "Can't send events from rec to preh")
-
-        return events
+        finally:
+            return events
 
     @http('GET', '/events')
     def force_update_handler(self, request):
-        self.logger_rpc.log(self.name, self.force_update_handler.__name__, str(request), "Info", "Force update")
-
-        return (200, json.dumps(self.update(), ensure_ascii=False))
+        events = self.update()
+        
+        # try/finally allows us to ignore if this service doesn't exist
+        # TODO: get rid of this dumb try/finally
+        try:
+            self.preh_rpc.receive_events(events)
+        finally:
+            return (200, json.dumps(events, ensure_ascii=False))
 
     # TODO: ensure it works @MaxKuznets0v
     @timer(interval=cfg.TIMER, eager=True)
@@ -93,7 +91,5 @@ class REC:
                               minutes=(-now.minute + cfg.TIME.minute),
                               seconds=(-now.second + cfg.TIME.second))
         print(f"Waiting {delta} ...")
-        self.logger_rpc.log(self.name, self.handle_update.__name__, None, "Info", f"Waiting {delta}...")
         sleep(delta.total_seconds())
-        self.logger_rpc.log(self.name, self.handle_update.__name__, None, "Info", "Daily update")
         return self.update()
