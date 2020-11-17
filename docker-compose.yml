@@ -1,12 +1,13 @@
 version: "3.8"
 
 services:
-  raw_events_collector:
+  rec:
     build:
       context: .
-    depends_on:
-      - rabbit
+    ports:
+      - "8001:8000"
     environment:
-      RABBIT_PASSWORD: "A6oLg0mn0MZHWN0BsHAIh3OqYeohszpA"
-      RABBIT_USER: "xjbiarkb"
-      RABBIT_HOST: "bonobo.rmq.cloudamqp.com/xjbiarkb"
+      RABBIT_PASSWORD: "guest"
+      RABBIT_USER: "guest"
+      RABBIT_HOST: "rabbit"
+      RABBIT_PORT: "5672"
