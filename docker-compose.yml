@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  raw_events_collector:
+    build:
+      context: .
+    depends_on:
+      - rabbit
+    environment:
+      RABBIT_PASSWORD: "A6oLg0mn0MZHWN0BsHAIh3OqYeohszpA"
+      RABBIT_USER: "xjbiarkb"
+      RABBIT_HOST: "bonobo.rmq.cloudamqp.com/xjbiarkb"
