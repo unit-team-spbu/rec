@@ -50,7 +50,7 @@ sudo docker run -p 5672:5672 --hostname nameko-rabbitmq rabbitmq:3
 Затем из папки микросервиса вызвать
 
 ```bat
-nameko run rec
+nameko run raw_events_collector
 ```
 
 Сервис запустится самостоятельно, и с помощью декоратора `@timer` будет обновлять события каждые сутки
